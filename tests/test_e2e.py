@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from polylogos.debate import Polylogos
 
-
 TOPIC = (
     "Should India accelerate AMCA Mk-2 versus committing to a second tranche of "
     "foreign 4.5-gen fighters?"
@@ -24,7 +23,7 @@ def test_e2e_produces_article_and_minority_report() -> None:
 
     # Article must be substantive
     assert len(output.article.split()) >= 600
-    assert "Polylogos Synthesis" in output.article
+    assert "Moot Synthesis" in output.article
     assert "Methodological note" in output.article
     assert "Disclosure" in output.article
 

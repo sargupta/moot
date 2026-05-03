@@ -21,7 +21,6 @@ from dataclasses import dataclass
 from polylogos.llm.provider import GenerationRequest
 from polylogos.schemas.persona import ArgumentationStyle, Persona
 
-
 # Book-cite phrasings keyed by argumentation style — gives surface diversity
 # without losing the deterministic mapping persona → output.
 _BOOK_CITES: dict[ArgumentationStyle, list[str]] = {
@@ -135,7 +134,7 @@ class MockProvider:
     def cost_per_1k_tokens_inr(self) -> float:
         return 0.0
 
-    def generate(self, request: GenerationRequest) -> str:  # noqa: PLR0915
+    def generate(self, request: GenerationRequest) -> str:
         persona = request.persona
         rng = self._rng_for_request(request)
 
@@ -202,13 +201,13 @@ class MockProvider:
 
     # ────────────────────────── content helpers ──────────────────────────
 
-    def _book_paraphrase(self, book, stance_label: str) -> str:  # noqa: ANN001
+    def _book_paraphrase(self, book, stance_label: str) -> str:
         return (
             f"his core point — paraphrased — is that {book.beliefs_changed[0].lower()}, and that "
             f"reading has shaped how I weigh this question."
         )
 
-    def _claim_text(self, persona: Persona, topic: str, stance_label: str, book) -> str:  # noqa: ANN001
+    def _claim_text(self, persona: Persona, topic: str, stance_label: str, book) -> str:
         verb = {
             "strongly_for": "must move decisively to commit",
             "for": "should commit, with sequencing safeguards",
@@ -241,7 +240,7 @@ class MockProvider:
             "as a residual rather than a binding constraint"
         )
 
-    def _rebuttal_claim(self, persona: Persona, topic: str, stance_label: str, book) -> str:  # noqa: ANN001
+    def _rebuttal_claim(self, persona: Persona, topic: str, stance_label: str, book) -> str:
         return (
             f"Given the irreversibility of the commitment and the distribution of likely outcomes, "
             f"a {stance_label.replace('_', ' ')} posture is the dominant strategy — a point that "

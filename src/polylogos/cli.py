@@ -46,7 +46,7 @@ def _load_dotenv_if_present() -> None:
 _load_dotenv_if_present()
 
 
-app = typer.Typer(help="Polylogos — open multi-agent debate engine.")
+app = typer.Typer(help="Moot — open multi-agent debate engine. A product of SARGVISION Intelligence.")
 console = Console()
 
 
@@ -113,7 +113,7 @@ def debate(
         encoding="utf-8",
     )
 
-    table = Table(title="Polylogos debate metrics", show_header=True)
+    table = Table(title="Moot debate metrics", show_header=True)
     table.add_column("metric")
     table.add_column("value", justify="right")
     table.add_row("debate_id", str(output.config.debate_id))
@@ -128,7 +128,7 @@ def debate(
     table.add_row("cluster entropy (nats)", f"{output.final_cluster_entropy:.3f}")
     table.add_row("diversity volume", f"{output.final_diversity_volume:.3f}")
 
-    console.print(Panel.fit(f"Topic: {output.config.topic}", title="Polylogos"))
+    console.print(Panel.fit(f"Topic: {output.config.topic}", title="Moot"))
     console.print(table)
     console.print(f"\nWrote:\n  {article_path}\n  {remark_path}\n  {minority_path}\n  {transcript_path}\n  {metrics_path}")
 
@@ -139,14 +139,14 @@ def serve(
     port: int = typer.Option(8765, help="Bind port for the web UI."),
     reload: bool = typer.Option(False, "--reload", help="Reload on source change (dev only)."),
 ) -> None:
-    """Boot the Polylogos web UI (Live Stance Theatre at http://host:port/)."""
+    """Boot the Moot web UI (Stance Chamber at http://host:port/)."""
     import uvicorn
 
     console.print(
         Panel.fit(
-            f"Polylogos UI booting at [bold]http://{host}:{port}/[/bold]\n"
-            "Open the URL in a browser to drive a debate.",
-            title="Polylogos · serve",
+            f"Moot UI booting at [bold]http://{host}:{port}/[/bold]\n"
+            "Open the URL in a browser to convene the chamber.",
+            title="Moot · serve",
         )
     )
     # Importable string so uvicorn's reload mode works; otherwise uvicorn will

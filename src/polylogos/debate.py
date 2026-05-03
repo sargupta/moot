@@ -49,7 +49,7 @@ class DebateRun:
 
     output: DebateOutput
     cluster: ClusterResult
-    personas: list  # noqa: ANN001 — list[Persona]; avoid the import here
+    personas: list
 
 
 @dataclass

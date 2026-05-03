@@ -16,7 +16,6 @@ import numpy as np
 
 from polylogos.schemas.argument import ArgumentEdge, Claim, EdgeType, Stance
 
-
 _CLAIM_RE = re.compile(r"\[\[CLAIM:(?P<stance>[a-z_]+)\]\]\s*(?P<text>.+?)\s*\[\[/CLAIM\]\]", re.DOTALL)
 
 

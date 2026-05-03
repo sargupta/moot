@@ -1,4 +1,5 @@
-# Polylogos — The Honest Business Case
+# Moot — The Honest Business Case
+###### *Internal artefact · SARGVISION Intelligence*
 ### After running the engine on its own commercial premise, in front of a synthetic panel of ten deeptech investors, mentors, and operators
 
 ---

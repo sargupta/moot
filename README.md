@@ -1,6 +1,11 @@
 # Moot
+###### A product of **SARGVISION Intelligence**
+
+[![CI](https://github.com/sargupta/moot/actions/workflows/ci.yml/badge.svg)](https://github.com/sargupta/moot/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/) [![Built with uv](https://img.shields.io/badge/built_with-uv-de5fe9.svg)](https://github.com/astral-sh/uv)
 
 **A debate engine for high-stakes decisions.** Put a question to a panel of ten synthetic experts. Watch them argue through four structured rounds. Read what they decided — and the strongest case the minority refused to concede.
+
+![Moot — Stance Chamber, populated debate](docs/img/moot-chamber.png)
 
 ```bash
 uv sync
@@ -9,6 +14,12 @@ uv run polylogos serve
 ```
 
 → <http://localhost:8765/>
+
+<details>
+<summary><strong>The empty hero — masthead, dispatch row, dissent broadside, and chamber pre-debate.</strong></summary>
+
+![Moot — pristine state](docs/img/moot-hero.png)
+</details>
 
 ---
 
@@ -352,4 +363,8 @@ CI-safe: no API keys required, no network calls, ~1 second wall-clock total.
 
 ## License
 
-MIT. The orchestration code is open. Persona seeds, sample topics, and synthesis methodology are open. Contributions welcome via PR with the orthogonality + diversity-volume gates passing.
+MIT, © 2026 SARGVISION Intelligence. The orchestration code is open. Persona seeds, sample topics, and synthesis methodology are open. Contributions welcome via PR with the orthogonality + diversity-volume gates passing.
+
+---
+
+*Moot · A product of [**SARGVISION Intelligence**](https://github.com/sargupta).*

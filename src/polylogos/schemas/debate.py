@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Annotated
 from uuid import UUID, uuid4
@@ -24,7 +24,7 @@ class DebateConfig(BaseModel):
     topic: str
     cluster_size: int = 10
     seed: int = 42
-    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class Turn(BaseModel):

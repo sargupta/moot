@@ -83,7 +83,7 @@ def _stance_summary(stance_dist: Counter[Stance], total: int) -> str:
     return "; ".join(parts) + "."
 
 
-def _build_article(  # noqa: PLR0913
+def _build_article(
     topic: str,
     claims: list[Claim],
     pagerank: dict,
@@ -101,9 +101,9 @@ def _build_article(  # noqa: PLR0913
         )
 
     sections: list[str] = []
-    sections.append(f"# Polylogos Synthesis: {topic}\n")
+    sections.append(f"# Moot Synthesis: {topic}\n")
     sections.append(
-        "*This article was produced by Polylogos, an open multi-agent debate engine. "
+        "*This article was produced by Moot, an open multi-agent debate engine. "
         "It is an extractive synthesis of agent claims — every assertion below is asserted "
         "by a specific synthetic persona, attributed inline. This is an AI-generated "
         "deliberative artefact, not a human consensus and not a recommendation.*\n"
@@ -175,7 +175,7 @@ def _build_executive_remark(
     total_claims: int,
 ) -> str:
     if not top_claims:
-        return f"Polylogos was unable to extract any claims for: {topic}."
+        return f"Moot was unable to extract any claims for: {topic}."
     leader = top_claims[0]
     leader_persona = persona_lookup.get(leader.asserted_by, "an unattributed persona")
     distribution = _stance_summary(stance_dist, total_claims)
@@ -235,14 +235,14 @@ def _build_minority_report(
 def synthesize(
     topic: str,
     graph: ArgumentGraph,
-    personas: list,  # noqa: ANN001
+    personas: list,
 ) -> SynthesisOutput:
     persona_lookup = {p.persona_id: p.short_label() for p in personas}
     pagerank = rank_claims(graph)
     claims = list(graph.claims.values())
     if not claims:
         return SynthesisOutput(
-            article=f"# Polylogos Synthesis: {topic}\n\nNo claims were produced by the cluster.",
+            article=f"# Moot Synthesis: {topic}\n\nNo claims were produced by the cluster.",
             executive_remark=f"No claims for: {topic}.",
             minority_report="No minority view available.",
             quality_band="degraded",

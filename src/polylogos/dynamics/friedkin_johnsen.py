@@ -20,7 +20,6 @@ import numpy as np
 from polylogos.dynamics.orthogonality import persona_embedding
 from polylogos.schemas.persona import Persona
 
-
 N_STANCE_BINS = 5
 
 
@@ -77,7 +76,6 @@ def trust_matrix(personas: list[Persona]) -> np.ndarray:
 
     w_ij ∝ exp(β · cos(θ_i, θ_j)); zero on diagonal; row-normalised.
     """
-    n = len(personas)
     embeddings = np.stack([persona_embedding(p) for p in personas])
     norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
     normed = embeddings / np.where(norms == 0, 1, norms)

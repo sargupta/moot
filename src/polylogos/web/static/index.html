@@ -11,7 +11,8 @@
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
 <style>
   /* ────────────────────────────────────────────────────────────────────
-     POLYLOGOS — A CHAMBER OF SYNTHETIC OPINION
+     MOOT — A CHAMBER OF SYNTHETIC OPINION
+     A product of SARGVISION Intelligence.
      Visual register: 18th-century parliamentary broadsheet meets oral
      argument transcript. Parchment surface, hairline rules, hemicycle
      bench, wax-seal round medallions, vermilion dissent broadside.
@@ -1122,7 +1123,7 @@
   </main>
 
   <footer class="colophon">
-    <div>POLYLOGOS PRESS · MMXXVI</div>
+    <div>SARGVISION INTELLIGENCE · MOOT · MMXXVI</div>
     <div>SET IN CORMORANT GARAMOND, EB GARAMOND, JETBRAINS MONO</div>
     <div>AN OPEN ENGINE · MIT</div>
   </footer>
@@ -1919,8 +1920,16 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#steelman-btn').addEventListener('click', steelmanMinority);
   $('#bc-link').addEventListener('click', e => {
     e.preventDefault();
-    toast('See /Users/sargupta/ai-debate-policy/BUSINESS_CASE.md for the brutal commercial scoping.');
+    toast('See BUSINESS_CASE.md for the commercial scoping.');
   });
+  // Autorun support — `?autorun=1[&seed=N&pool=…]` triggers a debate after
+  // sample-topics finish loading. Useful for headless screenshots, demos.
+  const params = new URLSearchParams(location.search);
+  if (params.get('autorun') === '1') {
+    if (params.get('pool')) $('#pool').value = params.get('pool');
+    if (params.get('seed')) $('#seed').value = params.get('seed');
+    setTimeout(() => $('#run-btn').click(), 1200);
+  }
 });
 </script>
 </body>

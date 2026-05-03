@@ -42,7 +42,7 @@ _ENTROPY_FLOOR_NATS = 0.42  # plan §4.1 corollary
 class ClusterResult:
     transcript: list[Turn]
     graph: ArgumentGraph
-    personas: list  # noqa: ANN001 — list[Persona], avoid forward ref import dance
+    personas: list
     final_orthogonality: float
     final_cluster_entropy: float
     final_diversity_volume: float
@@ -106,7 +106,7 @@ class ClusterDebate:
                 persona, req = pair
                 try:
                     return (persona, self.provider.generate(req))
-                except Exception as exc:  # noqa: BLE001 — saga: log+continue
+                except Exception as exc:
                     note = (
                         f"(Turn lost to transient provider failure: "
                         f"{type(exc).__name__}: {exc!s})"

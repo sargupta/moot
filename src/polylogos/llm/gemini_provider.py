@@ -28,7 +28,6 @@ from google.genai import types
 from polylogos.llm.provider import GenerationRequest
 from polylogos.schemas.persona import Persona
 
-
 _DEFAULT_MODEL = "gemini-2.5-flash"
 _USD_INR = 83.0
 # Gemini 2.5 models do internal "thinking" by default, which eats the output-token
@@ -220,7 +219,6 @@ class GeminiProvider:
         # retry policy but it's miserly — a single 503 kills a 40-call debate.
         # We add a thin outer retry so one flaky call doesn't burn the run.
         attempts = 4
-        last_err: Exception | None = None
         for attempt in range(attempts):
             try:
                 response = self._client.models.generate_content(
@@ -229,15 +227,13 @@ class GeminiProvider:
                     config=config,
                 )
                 break
-            except genai_errors.ServerError as exc:
-                last_err = exc
+            except genai_errors.ServerError:
                 if attempt == attempts - 1:
                     raise
                 # 0.5, 1.0, 2.0 s with ±25% jitter
                 delay = (0.5 * (2 ** attempt)) * (0.75 + random.random() * 0.5)
                 time.sleep(delay)
             except genai_errors.APIError as exc:
-                last_err = exc
                 # 4xx: don't retry (config / auth / rate limit-ish error). Surface fast.
                 code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
                 if isinstance(code, int) and 400 <= code < 500:

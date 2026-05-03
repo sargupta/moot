@@ -33,8 +33,6 @@ from pydantic import BaseModel, Field
 from polylogos.debate import DebateRun, Polylogos
 from polylogos.graph import rank_claims
 from polylogos.personas import available_pools, default_pool
-from polylogos.schemas.argument import Stance
-
 
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -206,7 +204,7 @@ def _project_beliefs_to_2d(beliefs: np.ndarray) -> list[tuple[float, float, floa
     return out
 
 
-def _serialise_personas(personas: list) -> list[dict[str, Any]]:  # noqa: ANN001
+def _serialise_personas(personas: list) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for p in personas:
         rows.append(
@@ -254,7 +252,7 @@ def _serialise_stance_theatre(run: DebateRun) -> list[list[dict[str, Any]]]:
     for round_index, beliefs in enumerate(run.cluster.belief_snapshots):
         projected = _project_beliefs_to_2d(beliefs)
         frame: list[dict[str, Any]] = []
-        for (pid, label), (x, y, exp_s, conf) in zip(persona_meta, projected):
+        for (pid, label), (x, y, exp_s, conf) in zip(persona_meta, projected, strict=True):
             frame.append(
                 asdict(
                     _StanceTheatrePoint(
@@ -312,10 +310,7 @@ def _dissent_table(run: DebateRun) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for c in claims:
         p_stance = stance_dist[c.stance] / total
-        if p_stance == 0:
-            score = 0.0
-        else:
-            score = -math.log(p_stance) * pagerank.get(c.claim_id, 0.0)
+        score = 0.0 if p_stance == 0 else -math.log(p_stance) * pagerank.get(c.claim_id, 0.0)
         rows.append(
             {
                 "claim_id": str(c.claim_id),

@@ -1,10 +1,13 @@
 [project]
 name = "polylogos"
 version = "0.0.1"
-description = "Open 500-agent debate engine for strategic decisions — walking skeleton"
+description = "Moot — debate engine for high-stakes decisions. A product of SARGVISION Intelligence."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
+authors = [
+    { name = "SARGVISION Intelligence", email = "contact@sargvision.com" },
+]
 dependencies = [
     "pydantic>=2.9",
     "numpy>=2.0",
@@ -42,7 +45,16 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "RUF"]
-ignore = ["E501"]
+# E501: line length (we use a 100-col soft limit, not strict)
+# RUF001/002/003: ambiguous Unicode warnings — we intentionally use ×, em-dashes,
+# Greek letters (β, ε, λ, π, σ, θ) in math/typography comments
+ignore = ["E501", "RUF001", "RUF002", "RUF003", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+# Typer's idiomatic pattern is `arg: Type = typer.Option(...)` in the function
+# signature; ruff B008 flags this as a function-call default. The pattern is
+# canonical for Typer; ignoring B008 in the CLI file only.
+"src/polylogos/cli.py" = ["B008"]
 
 [tool.mypy]
 strict = true

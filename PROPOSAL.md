@@ -1,4 +1,5 @@
 # Moot
+###### A product of **SARGVISION Intelligence**
 ## Stress-test high-stakes decisions against a panel of synthetic experts.
 
 > **One line.** Moot puts your hardest question to ten distinct AI personas — each with a generated 60-year life, five formative books, a 12-axis ideology — and produces a synthesis, an executive brief, and a Register of Dissent surfacing the strongest case the majority brushed off. 50 seconds. ~₹6.50 per debate.
@@ -211,10 +212,10 @@ A 30-minute conversation to walk through:
 
 The product is running today. To request a demo or a 30-minute call:
 
-→ **founder@moot.ai** *(placeholder)*
-→ Live engine + UI: **http://localhost:8765/** (during demos)
-→ Source: this repository (open-core, MIT)
+→ **contact@sargvision.com**
+→ Live engine + UI: spun up during demos (FastAPI + single static page; ~30s to boot)
+→ Source: <https://github.com/sargupta/moot> (open-core, MIT)
 
 ---
 
-*Moot · A Chamber of Synthetic Opinion*
+*Moot · A Chamber of Synthetic Opinion · A product of **SARGVISION Intelligence***

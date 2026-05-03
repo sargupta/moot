@@ -22,7 +22,6 @@ import anthropic
 from polylogos.llm.provider import GenerationRequest
 from polylogos.schemas.persona import Persona
 
-
 # Sonnet 4.6 is the default for cluster turns per the plan §16.2 routing.
 # Override with POLYLOGOS_ANTHROPIC_MODEL.
 _DEFAULT_MODEL = "claude-sonnet-4-6"
