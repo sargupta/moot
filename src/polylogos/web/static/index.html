@@ -1,0 +1,1927 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Moot · A Chamber of Synthetic Opinion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@300;400;500;600&display=swap" />
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+<style>
+  /* ────────────────────────────────────────────────────────────────────
+     POLYLOGOS — A CHAMBER OF SYNTHETIC OPINION
+     Visual register: 18th-century parliamentary broadsheet meets oral
+     argument transcript. Parchment surface, hairline rules, hemicycle
+     bench, wax-seal round medallions, vermilion dissent broadside.
+     ──────────────────────────────────────────────────────────────────── */
+
+  :root {
+    /* parchment & ink */
+    --paper:        #f4ecdb;
+    --paper-tint:   #ebe2ce;
+    --paper-deep:   #e0d4ba;
+    --ink:          #1f1611;
+    --ink-soft:     #443326;
+    --ink-mute:     #7a6549;
+    --rule:         #7a6549;
+    --rule-faint:   #b6a484;
+
+    /* signature */
+    --vermilion:    #c0322a;
+    --vermilion-d:  #8a1d18;
+    --gilt:         #a07b2a;
+
+    /* stance encoding (teal ↔ oxblood; no green/red) */
+    --st-sfor:  #1f4544;
+    --st-for:   #5d8c8a;
+    --st-neut:  #8a7553;
+    --st-ag:    #a8454a;
+    --st-sag:   #7a201a;
+
+    --shadow:    0 1px 0 rgba(31,22,17,0.04), 0 12px 40px -28px rgba(31,22,17,0.45);
+    --shadow-l:  0 1px 0 rgba(31,22,17,0.06), 0 30px 60px -32px rgba(31,22,17,0.5);
+
+    --serif-d:   "Cormorant Garamond", "EB Garamond", Georgia, serif;
+    --serif-b:   "EB Garamond", Georgia, serif;
+    --mono:      "JetBrains Mono", "Courier New", monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--serif-b);
+    color: var(--ink);
+    background: var(--paper);
+    font-size: 16px;
+    line-height: 1.55;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    /* parchment grain — SVG noise data URL, very subtle */
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.12 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.07 0'/></filter><rect width='320' height='320' filter='url(%23n)'/></svg>"),
+      radial-gradient(ellipse 1100px 700px at 50% 0%, var(--paper-tint) 0%, var(--paper) 60%);
+  }
+  ::selection { background: var(--vermilion); color: var(--paper); }
+
+  /* ─── shell ─── */
+  .sheet {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 56px 80px;
+    position: relative;
+  }
+  .sheet::before, .sheet::after {
+    content: "";
+    position: absolute;
+    left: 56px; right: 56px;
+    height: 1px; background: var(--ink);
+  }
+  .sheet::before { top: 28px; }
+  .sheet::after { bottom: 36px; }
+
+  /* ─── masthead ─── */
+  .masthead {
+    text-align: center;
+    padding: 24px 0 18px;
+    border-bottom: 3px double var(--ink);
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .running-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 14px;
+  }
+  .running-head .center { letter-spacing: 0.32em; color: var(--ink-soft); }
+  .masthead h1 {
+    font-family: var(--serif-d);
+    font-weight: 500;
+    font-style: italic;
+    font-size: 78px;
+    line-height: 1;
+    margin: 4px 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .masthead h1 .ampersand {
+    font-family: var(--serif-d); font-style: italic; font-weight: 400;
+    color: var(--vermilion);
+  }
+  .masthead .tagline {
+    font-family: var(--serif-d);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink-soft);
+    letter-spacing: 0.01em;
+  }
+  .masthead .tagline a { color: var(--vermilion); border-bottom: 1px solid var(--vermilion); text-decoration: none; }
+  .ornament-bar {
+    display: flex; justify-content: center; align-items: center; gap: 14px;
+    margin: 16px 0 6px;
+    font-family: var(--serif-d);
+    font-size: 14px; color: var(--ink-mute);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .ornament-bar .ornament { color: var(--vermilion); font-size: 20px; }
+
+  /* ─── dispatch block (small caps, edition info) ─── */
+  .dispatch {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--rule);
+    padding: 10px 0 14px;
+    margin-bottom: 28px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .dispatch > div { padding: 0 12px; }
+  .dispatch > div:first-child { padding-left: 0; }
+  .dispatch > div:last-child { padding-right: 0; text-align: right; }
+  .dispatch > div + div { border-left: 1px solid var(--rule-faint); }
+  .dispatch strong { color: var(--ink); font-weight: 500; }
+
+  /* ─── DISSENT BROADSIDE — the value-prop above the fold ─── */
+  .broadside {
+    border: 2px solid var(--vermilion);
+    padding: 26px 36px 30px;
+    margin-bottom: 36px;
+    position: relative;
+    background:
+      linear-gradient(to bottom, transparent 0, transparent 100%),
+      var(--paper);
+  }
+  .broadside::before, .broadside::after {
+    content: "";
+    position: absolute;
+    left: 6px; right: 6px;
+    height: 1px;
+    background: var(--vermilion);
+    opacity: 0.55;
+  }
+  .broadside::before { top: 6px; }
+  .broadside::after { bottom: 6px; }
+
+  .broadside .label {
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--vermilion);
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .broadside .pullquote {
+    font-family: var(--serif-d);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 28px;
+    line-height: 1.25;
+    text-align: center;
+    color: var(--ink);
+    margin: 0;
+    max-width: 860px;
+    margin-inline: auto;
+  }
+  .broadside .pullquote .dropcap {
+    font-family: var(--serif-d);
+    font-weight: 600;
+    font-size: 84px;
+    line-height: 0.85;
+    float: left;
+    margin: 8px 12px -6px 0;
+    color: var(--vermilion);
+  }
+  .broadside .attribution {
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-mute);
+    text-align: center;
+    margin-top: 22px;
+  }
+  .broadside .attribution strong { color: var(--vermilion-d); font-weight: 500; }
+  .broadside .actions {
+    display: flex; justify-content: center; gap: 12px;
+    margin-top: 18px;
+  }
+  .broadside.empty {
+    border-color: var(--rule);
+    color: var(--ink-mute);
+  }
+  .broadside.empty .label { color: var(--ink-mute); }
+  .broadside.empty .pullquote { color: var(--ink-mute); font-size: 22px; }
+
+  /* ─── hemicycle hero ─── */
+  .chamber-frame {
+    border: 1px solid var(--rule);
+    padding: 18px 18px 14px;
+    background: var(--paper-tint);
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+  .chamber-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 8px; margin-bottom: 6px;
+  }
+  .chamber-head .title {
+    font-family: var(--serif-d);
+    font-weight: 500;
+    font-style: italic;
+    font-size: 22px;
+    letter-spacing: 0.01em;
+  }
+  .chamber-head .meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .chamber-svg {
+    width: 100%;
+    height: 540px;
+    display: block;
+  }
+
+  /* ─── round medallions ─── */
+  .seals {
+    display: flex; justify-content: center; gap: 28px;
+    padding: 22px 0 14px;
+  }
+  .seal {
+    width: 86px; height: 86px;
+    border-radius: 50%;
+    background: var(--paper-deep);
+    border: 1.5px solid var(--rule);
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .seal::before {
+    content: "";
+    position: absolute; inset: 6px;
+    border-radius: 50%;
+    border: 1px dashed var(--rule);
+    opacity: 0.5;
+  }
+  .seal .roman {
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 1;
+    color: var(--ink-soft);
+  }
+  .seal .label {
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    color: var(--ink-mute);
+  }
+  .seal:hover { transform: translateY(-1px); }
+  .seal.active {
+    background: var(--vermilion);
+    border-color: var(--vermilion-d);
+    box-shadow: 0 6px 14px -6px rgba(192,50,42,0.6), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .seal.active .roman, .seal.active .label { color: var(--paper); }
+  .seal.disabled { opacity: 0.5; cursor: not-allowed; }
+  .seal-caption {
+    text-align: center;
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    margin-bottom: 22px;
+  }
+  .seal-caption .roman { color: var(--vermilion); font-weight: 500; }
+
+  /* ─── three-column body ─── */
+  .body-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 28px;
+    margin-top: 8px;
+  }
+  @media (max-width: 980px) {
+    .body-grid { grid-template-columns: 1fr; }
+    .sheet { padding: 32px 24px 64px; }
+    .masthead h1 { font-size: 56px; }
+    .broadside .pullquote { font-size: 22px; }
+  }
+
+  /* ─── this-issue sidebar (controls) ─── */
+  .issue {
+    border-top: 3px double var(--ink);
+    border-bottom: 3px double var(--ink);
+    padding: 16px 0;
+  }
+  .issue h2 {
+    font-family: var(--serif-d);
+    font-weight: 500;
+    font-style: italic;
+    font-size: 24px;
+    margin: 0 0 14px;
+    letter-spacing: 0.01em;
+  }
+  .field {
+    margin-bottom: 12px;
+  }
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 4px;
+  }
+  .field textarea, .field input, .field select {
+    width: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    padding: 8px 10px;
+    font-family: var(--serif-b);
+    font-size: 14px;
+    border-radius: 0;
+    transition: border-color 0.15s ease;
+  }
+  .field textarea {
+    min-height: 88px;
+    resize: vertical;
+    line-height: 1.4;
+  }
+  .field textarea:focus, .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--vermilion);
+    background: #fbf6e8;
+  }
+  .field-row { display: flex; gap: 8px; }
+  .field-row > .field { flex: 1; }
+
+  .topic-suggest {
+    margin-top: 6px;
+    border: 1px solid var(--rule-faint);
+    padding: 4px 0;
+    background: var(--paper);
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .topic-suggest button {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    padding: 6px 10px;
+    text-align: left;
+    font-family: var(--serif-b);
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    line-height: 1.3;
+    border-bottom: 1px dotted var(--rule-faint);
+  }
+  .topic-suggest button:last-child { border-bottom: 0; }
+  .topic-suggest button:hover { background: var(--paper-deep); color: var(--ink); }
+
+  /* ─── seal-press button ─── */
+  .btn-press {
+    width: 100%;
+    padding: 14px 20px;
+    background: var(--vermilion);
+    color: var(--paper);
+    border: 0;
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.12s ease, background 0.18s ease, box-shadow 0.18s ease;
+    box-shadow: 0 4px 0 var(--vermilion-d), 0 6px 14px -8px rgba(122,32,26,0.6);
+  }
+  .btn-press:hover { background: var(--vermilion-d); }
+  .btn-press:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--vermilion-d); }
+  .btn-press:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-press .ornament { font-style: normal; margin-right: 8px; color: rgba(255,255,255,0.7); }
+
+  .btn-quiet {
+    background: transparent;
+    color: var(--vermilion-d);
+    border: 1px solid var(--vermilion-d);
+    padding: 8px 16px;
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-size: 14px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  .btn-quiet:hover { background: var(--vermilion); color: var(--paper); }
+
+  /* ─── metric printer's strip ─── */
+  .telemetry {
+    margin-top: 18px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+  .telemetry .row { display: flex; justify-content: space-between; }
+  .telemetry .row .k { color: var(--ink-mute); letter-spacing: 0.1em; text-transform: uppercase; font-size: 9.5px; }
+  .telemetry .row .v { font-weight: 500; color: var(--ink); }
+  .telemetry .row.flag .v { color: var(--vermilion); }
+
+  /* ─── primary copy column ─── */
+  .copy {
+    background: transparent;
+  }
+  .section-cap {
+    font-family: var(--serif-d);
+    font-weight: 500;
+    font-style: italic;
+    font-size: 28px;
+    border-top: 3px double var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 14px 0 8px;
+    margin: 32px 0 18px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .section-cap .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-mute);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    letter-spacing: 0.01em;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active {
+    color: var(--vermilion);
+    border-bottom-color: var(--vermilion);
+  }
+  .tab-body { display: none; }
+  .tab-body.active { display: block; }
+
+  /* ─── article body (broadsheet body copy) ─── */
+  .prose {
+    column-count: 2;
+    column-gap: 32px;
+    column-rule: 1px solid var(--rule-faint);
+    font-family: var(--serif-b);
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink);
+    max-height: 620px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .prose.single-col { column-count: 1; max-height: 480px; }
+  .prose h1, .prose h2, .prose h3 {
+    font-family: var(--serif-d);
+    font-weight: 500;
+    font-style: italic;
+    break-after: avoid;
+  }
+  .prose h1 { font-size: 26px; margin: 4px 0 12px; }
+  .prose h2 {
+    font-size: 19px; margin: 16px 0 6px;
+    color: var(--vermilion-d);
+    border-bottom: 1px solid var(--rule-faint);
+    padding-bottom: 4px;
+  }
+  .prose h3 { font-size: 16px; margin: 12px 0 4px; color: var(--ink-soft); }
+  .prose p { margin: 0 0 10px; }
+  .prose p:first-of-type::first-letter {
+    font-family: var(--serif-d);
+    font-weight: 500;
+    font-size: 56px;
+    line-height: 0.85;
+    float: left;
+    margin: 6px 8px -6px 0;
+    color: var(--vermilion);
+  }
+  .prose ul { padding-left: 20px; }
+  .prose li { margin-bottom: 4px; }
+  .prose strong { color: var(--ink); font-weight: 600; }
+  .prose em { color: var(--ink-soft); }
+  .prose blockquote {
+    border-left: 3px solid var(--vermilion);
+    padding-left: 12px;
+    margin: 8px 0;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  /* ─── transcript with speakers ─── */
+  .transcript-list { display: flex; flex-direction: column; gap: 0; max-height: 620px; overflow-y: auto; padding-right: 8px; }
+  .turn {
+    border-bottom: 1px solid var(--rule-faint);
+    padding: 14px 0 12px;
+  }
+  .turn .speaker {
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 17px;
+    color: var(--ink);
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .turn .speaker .ord {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .turn .text {
+    font-family: var(--serif-b);
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+  .turn .stance-pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    margin-right: 8px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    vertical-align: 2px;
+  }
+
+  /* ─── dissent register ─── */
+  .dissent-list { display: flex; flex-direction: column; gap: 0; max-height: 620px; overflow-y: auto; padding-right: 8px; }
+  .dissent-row {
+    padding: 14px 0 12px;
+    border-bottom: 1px solid var(--rule-faint);
+    position: relative;
+  }
+  .dissent-row .top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .dissent-row .who {
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .dissent-row .meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .dissent-row .meta .score { color: var(--vermilion); margin-left: 10px; font-weight: 500; }
+  .dissent-row .quote {
+    font-family: var(--serif-b);
+    font-style: italic;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--vermilion);
+    padding-left: 12px;
+  }
+
+  /* ─── argument graph ─── */
+  #graph svg {
+    width: 100%;
+    height: 540px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+  }
+  .graph-edge { stroke-opacity: 0.4; }
+  .graph-edge.supports { stroke: var(--st-sfor); }
+  .graph-edge.rebuts   { stroke: var(--st-sag); }
+  .graph-edge.qualifies { stroke: var(--ink-mute); }
+  .graph-node circle { stroke: var(--paper); stroke-width: 1.5; cursor: pointer; }
+  .graph-node text {
+    font-family: var(--mono);
+    font-size: 9px;
+    fill: var(--ink-soft);
+    letter-spacing: 0.04em;
+    pointer-events: none;
+  }
+
+  /* ─── personae cards ─── */
+  .personae {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 16px;
+  }
+  .persona-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 16px 18px 18px;
+    position: relative;
+    box-shadow: var(--shadow);
+  }
+  .persona-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--ink);
+  }
+  .persona-card h3 {
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 22px;
+    margin: 0 0 4px;
+    color: var(--ink);
+  }
+  .persona-card .role {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 10px;
+  }
+  .persona-card .role .b { color: var(--vermilion); }
+  .persona-card .books {
+    border-top: 1px solid var(--rule-faint);
+    padding-top: 10px;
+  }
+  .persona-card .books h4 {
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--ink-mute);
+    margin: 0 0 6px;
+  }
+  .persona-card .book {
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .persona-card .book .title { font-family: var(--serif-d); font-style: italic; font-weight: 500; color: var(--ink); }
+  .persona-card .book .auth { color: var(--ink-mute); }
+  .persona-card .book .why { color: var(--ink-soft); font-size: 12px; line-height: 1.45; }
+
+  /* ─── dossier slide-in ─── */
+  .dossier-overlay {
+    position: fixed; inset: 0;
+    background: rgba(31,22,17,0.45);
+    backdrop-filter: blur(2px);
+    z-index: 50;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .dossier-overlay.show { opacity: 1; pointer-events: auto; }
+  .dossier {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: min(540px, 92vw);
+    background: var(--paper);
+    box-shadow: var(--shadow-l);
+    z-index: 60;
+    overflow-y: auto;
+    transform: translateX(110%);
+    transition: transform 0.32s cubic-bezier(0.2, 0.7, 0.3, 1);
+    border-left: 1px solid var(--rule);
+  }
+  .dossier.show { transform: translateX(0); }
+  .dossier-head {
+    padding: 24px 28px 18px;
+    border-bottom: 3px double var(--ink);
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.12 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.05 0'/></filter><rect width='320' height='320' filter='url(%23n)'/></svg>"),
+      var(--paper-tint);
+  }
+  .dossier-head .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--vermilion);
+    margin-bottom: 6px;
+  }
+  .dossier-head h2 {
+    font-family: var(--serif-d);
+    font-weight: 500;
+    font-style: italic;
+    font-size: 32px;
+    margin: 0 0 4px;
+    line-height: 1.05;
+  }
+  .dossier-head .role {
+    font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute);
+  }
+  .dossier-body { padding: 22px 28px 56px; }
+  .dossier-section { margin-bottom: 22px; }
+  .dossier-section .h {
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+  }
+  .dossier-section p { margin: 0 0 6px; font-size: 14px; line-height: 1.55; }
+  .dossier-book {
+    margin-bottom: 14px;
+    padding-left: 14px;
+    border-left: 2px solid var(--vermilion);
+  }
+  .dossier-book .t {
+    font-family: var(--serif-d); font-style: italic; font-weight: 600; font-size: 17px; color: var(--ink);
+  }
+  .dossier-book .a { font-family: var(--serif-b); color: var(--ink-soft); font-size: 13px; }
+  .dossier-book .age {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-mute); margin-top: 2px;
+  }
+  .dossier-book .why { font-family: var(--serif-b); font-size: 14px; color: var(--ink-soft); margin-top: 6px; line-height: 1.55; font-style: italic; }
+  .dossier-close {
+    position: absolute; top: 18px; right: 18px;
+    background: transparent; border: 0;
+    font-family: var(--serif-d); font-style: italic; font-size: 22px;
+    cursor: pointer; color: var(--ink-mute);
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dossier-close:hover { color: var(--vermilion); }
+
+  .ideology-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px; font-size: 12px;
+  }
+  .ideology-bar .lab {
+    font-family: var(--mono); font-size: 9.5px;
+    color: var(--ink-mute); letter-spacing: 0.1em; text-transform: uppercase;
+    width: 140px; text-align: right;
+  }
+  .ideology-bar .track {
+    flex: 1; height: 4px; background: var(--paper-deep); position: relative;
+  }
+  .ideology-bar .track::before {
+    content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--rule);
+  }
+  .ideology-bar .marker {
+    position: absolute; top: -3px; width: 10px; height: 10px;
+    background: var(--vermilion); border: 1px solid var(--vermilion-d); border-radius: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* ─── colophon (bottom telemetry ribbon) ─── */
+  .colophon {
+    margin-top: 48px;
+    padding: 14px 0 0;
+    border-top: 3px double var(--ink);
+    display: flex; justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+
+  /* ─── notice toast ─── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 18px;
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    box-shadow: var(--shadow-l);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.25s ease;
+    z-index: 80;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: var(--paper);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 8px;
+    vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── reveal stagger ─── */
+  .reveal { opacity: 0; transform: translateY(8px); animation: rise 0.7s 0.05s ease forwards; }
+  .reveal.d1 { animation-delay: 0.18s; }
+  .reveal.d2 { animation-delay: 0.32s; }
+  .reveal.d3 { animation-delay: 0.46s; }
+  .reveal.d4 { animation-delay: 0.6s; }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+  /* ─── chamber svg internal ─── */
+  .seat { cursor: pointer; transition: transform 0.18s ease; }
+  .seat:hover { transform: scale(1.06); transform-origin: center; }
+  .seat .post { stroke: var(--rule); stroke-width: 1; }
+  .seat .body { stroke: var(--ink); stroke-width: 1; }
+  .seat .name {
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-size: 10px;
+    fill: var(--ink-soft);
+    text-anchor: middle;
+  }
+  .seat .num {
+    font-family: var(--mono);
+    font-size: 9px;
+    fill: var(--ink-mute);
+    text-anchor: middle;
+    letter-spacing: 0.1em;
+  }
+  .floor-axis {
+    stroke: var(--rule);
+    stroke-width: 1;
+  }
+  .floor-axis-faint { stroke: var(--rule-faint); stroke-width: 1; stroke-dasharray: 2 3; }
+  .axis-label {
+    font-family: var(--serif-d); font-style: italic; font-size: 12px; fill: var(--ink-mute);
+  }
+  .belief-trail {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.5;
+  }
+  .belief-current {
+    stroke: var(--ink);
+    stroke-width: 1.2;
+  }
+  .belief-current circle.dot {
+    stroke: var(--paper);
+    stroke-width: 1.5;
+    cursor: pointer;
+  }
+  .seat-line { stroke: var(--ink-mute); stroke-width: 0.6; opacity: 0.35; }
+  .ornament { color: var(--ink-mute); }
+
+  /* ─── tooltip ─── */
+  .tt {
+    position: absolute;
+    pointer-events: none;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 8px 12px;
+    font-family: var(--serif-d);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1.35;
+    border-radius: 0;
+    z-index: 70;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    max-width: 280px;
+    box-shadow: var(--shadow-l);
+  }
+  .tt::before {
+    content: "";
+    position: absolute; bottom: -5px; left: 14px;
+    width: 8px; height: 8px;
+    background: var(--ink);
+    transform: rotate(45deg);
+  }
+  .tt.show { opacity: 1; }
+  .tt .nm { font-style: italic; color: var(--paper); margin-bottom: 2px; }
+  .tt .meta { font-family: var(--mono); font-size: 10px; color: rgba(255,237,210,0.7); letter-spacing: 0.1em; text-transform: uppercase; }
+
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- ─── MASTHEAD ─── -->
+  <header class="masthead reveal">
+    <div class="running-head">
+      <span id="running-edition">EDITIO PRIMA — № I</span>
+      <span class="center">A CHAMBER OF SYNTHETIC OPINION</span>
+      <span id="running-provider">PROVIDER : —</span>
+    </div>
+    <h1>Moot<span class="ampersand"> · </span><span style="font-style: normal; font-weight: 400; font-size: 0.6em; letter-spacing: 0.06em; vertical-align: 0.1em;">A Chamber of Synthetic Opinion</span></h1>
+    <p class="tagline">Put a question to a panel of synthetic experts. Watch them debate. Read what they decided — and what the minority refused to concede.</p>
+    <div class="ornament-bar">
+      <span class="ornament">❦</span>
+      <span>Convened in synthetic counsel · adjourned in printed dispatch</span>
+      <span class="ornament">❦</span>
+    </div>
+  </header>
+
+  <!-- ─── DISPATCH BLOCK ─── -->
+  <div class="dispatch reveal">
+    <div><strong id="d-debate">A debate has not yet been called to order.</strong></div>
+    <div><span style="color:var(--vermilion-d);">CHAMBER:</span> <span id="d-chamber">— · awaiting</span></div>
+    <div><span style="color:var(--vermilion-d);">DISPATCH:</span> <span id="d-disp">no claims of record</span></div>
+  </div>
+
+  <!-- ─── DISSENT BROADSIDE — VALUE PROP ABOVE THE FOLD ─── -->
+  <section class="broadside empty reveal d1" id="broadside">
+    <div class="label">Parte Minori — The Strongest Dissent</div>
+    <p class="pullquote" id="broadside-quote">A debate must first be called for a minority view to surface. Choose a question, choose a chamber, and convene.</p>
+    <div class="attribution" id="broadside-attrib"></div>
+    <div class="actions">
+      <button class="btn-quiet" id="steelman-btn" style="display:none;">Steelman the minority →</button>
+    </div>
+  </section>
+
+  <!-- ─── HEMICYCLE STANCE CHAMBER ─── -->
+  <section class="chamber-frame reveal d2">
+    <div class="chamber-head">
+      <div class="title">The Stance Chamber</div>
+      <div class="meta" id="chamber-meta">10 SEATS · BENCHED IN ORDER OF SEAT NUMBER</div>
+    </div>
+    <svg class="chamber-svg" id="chamber" viewBox="0 0 1100 540" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="tt" id="tt"></div>
+  </section>
+
+  <!-- ─── ROUND MEDALLIONS ─── -->
+  <div class="seals reveal d3">
+    <div class="seal" data-round="0"><span class="roman">·</span><span class="label">Prior</span></div>
+    <div class="seal" data-round="1"><span class="roman">I</span><span class="label">Opening</span></div>
+    <div class="seal" data-round="2"><span class="roman">II</span><span class="label">Cross-Exam</span></div>
+    <div class="seal" data-round="3"><span class="roman">III</span><span class="label">Rebuttal</span></div>
+    <div class="seal" data-round="4"><span class="roman">IV</span><span class="label">Closing</span></div>
+  </div>
+  <p class="seal-caption reveal d3">
+    <span id="round-caption">Press a seal to scrub through the four rounds of argument.</span>
+  </p>
+
+  <!-- ─── BODY ─── -->
+  <main class="body-grid">
+
+    <!-- left: this issue -->
+    <aside class="reveal d4">
+      <section class="issue">
+        <h2>This Issue</h2>
+
+        <div class="field">
+          <label>Strategic Question</label>
+          <textarea id="topic" placeholder="What proposition shall be put to the chamber?"></textarea>
+        </div>
+
+        <div class="field">
+          <label id="topic-suggest-label">Sample Questions</label>
+          <div class="topic-suggest" id="topic-suggest"></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Bench size</label>
+            <input id="cluster-size" type="number" min="2" max="10" value="10" />
+          </div>
+          <div class="field">
+            <label>Seed</label>
+            <input id="seed" type="number" min="0" value="42" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Chamber</label>
+          <select id="pool">
+            <option value="citizens">Of Citizens & Stakeholders — schemes, ministries, enterprise</option>
+            <option value="investors">Of Investors & Mentors — startup decisions, fundraising</option>
+            <option value="evaluators">Of AI-Lab Evaluators — frontier-AI safety & evals</option>
+            <option value="defense">Of Defense — strategic & procurement</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Counsel (LLM)</label>
+          <select id="provider">
+            <option value="gemini">Google Gemini 2.5</option>
+            <option value="anthropic">Anthropic Claude · Sonnet 4.6</option>
+            <option value="mock">Deterministic mock (offline)</option>
+          </select>
+        </div>
+
+        <button class="btn-press" id="run-btn">
+          <span class="ornament">❦</span>Convene the Chamber
+        </button>
+
+        <div class="telemetry" id="telemetry">
+          <div class="row"><span class="k">Turns of record</span><span class="v" id="m-turns">—</span></div>
+          <div class="row"><span class="k">Claims tabled</span><span class="v" id="m-claims">—</span></div>
+          <div class="row"><span class="k">Synthesis (words)</span><span class="v" id="m-words">—</span></div>
+          <div class="row"><span class="k">Quality band</span><span class="v" id="m-band">—</span></div>
+          <div class="row"><span class="k">Cost (₹)</span><span class="v" id="m-cost">—</span></div>
+          <div class="row flag"><span class="k">Orthogonality (μ cos)</span><span class="v" id="m-ortho">—</span></div>
+          <div class="row flag"><span class="k">Cluster entropy</span><span class="v" id="m-entropy">—</span></div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- right: copy -->
+    <section class="copy">
+
+      <h2 class="section-cap reveal d4">
+        Of the Argument <span class="num">PARTS I — V</span>
+      </h2>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="article">Synthesis</div>
+        <div class="tab" data-tab="exec">Executive Remark</div>
+        <div class="tab" data-tab="dissent">Register of Dissent</div>
+        <div class="tab" data-tab="transcript">Transcript</div>
+        <div class="tab" data-tab="graph">Argument Graph</div>
+        <div class="tab" data-tab="personas">The Bench</div>
+      </div>
+
+      <div class="tab-body active" id="tab-article">
+        <div class="prose" id="article">
+          <p style="color: var(--ink-mute); font-style: italic; font-family: var(--serif-d); font-size: 18px; margin-top: 12px;">
+            The synthesis shall be assembled here once the chamber has been convened, in the manner of a printed dispatch from the bench.
+          </p>
+        </div>
+      </div>
+
+      <div class="tab-body" id="tab-exec">
+        <div class="prose single-col" id="exec">
+          <p style="color: var(--ink-mute); font-style: italic; font-family: var(--serif-d); font-size: 18px; margin-top: 12px;">
+            The Lord Speaker's executive remark, when issued, shall appear here.
+          </p>
+        </div>
+      </div>
+
+      <div class="tab-body" id="tab-dissent">
+        <div class="dissent-list" id="dissent">
+          <p style="color: var(--ink-mute); font-style: italic; font-family: var(--serif-d); font-size: 18px;">
+            No dissent has been registered. A debate must first be called.
+          </p>
+        </div>
+      </div>
+
+      <div class="tab-body" id="tab-transcript">
+        <div class="transcript-list" id="transcript"></div>
+      </div>
+
+      <div class="tab-body" id="tab-graph">
+        <div id="graph"></div>
+      </div>
+
+      <div class="tab-body" id="tab-personas">
+        <div class="personae" id="personas"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <div>POLYLOGOS PRESS · MMXXVI</div>
+    <div>SET IN CORMORANT GARAMOND, EB GARAMOND, JETBRAINS MONO</div>
+    <div>AN OPEN ENGINE · MIT</div>
+  </footer>
+</div>
+
+<!-- ─── Dossier Slide-in ─── -->
+<div class="dossier-overlay" id="dossier-overlay"></div>
+<aside class="dossier" id="dossier" aria-hidden="true">
+  <button class="dossier-close" id="dossier-close" aria-label="Close">×</button>
+  <header class="dossier-head">
+    <div class="label">DOSSIER · SEAT <span id="d-seat-num">—</span></div>
+    <h2 id="d-name">—</h2>
+    <div class="role" id="d-role">—</div>
+  </header>
+  <div class="dossier-body" id="dossier-body"></div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+function setHTML(el, html) { el.innerHTML = DOMPurify.sanitize(html, {USE_PROFILES: {html: true}}); }
+function el(tag, opts) {
+  const e = document.createElement(tag);
+  if (opts) {
+    if (opts.class) e.className = opts.class;
+    if (opts.text != null) e.textContent = opts.text;
+    if (opts.style) Object.assign(e.style, opts.style);
+    if (opts.attrs) for (const [k,v] of Object.entries(opts.attrs)) e.setAttribute(k, v);
+    if (opts.html != null) setHTML(e, opts.html);
+  }
+  return e;
+}
+
+const STANCE_COLOR = {
+  strongly_for: 'var(--st-sfor)',
+  for: 'var(--st-for)',
+  neutral: 'var(--st-neut)',
+  against: 'var(--st-ag)',
+  strongly_against: 'var(--st-sag)',
+};
+const STANCE_LABEL = {
+  strongly_for: 'strongly for',
+  for: 'for',
+  neutral: 'neutral',
+  against: 'against',
+  strongly_against: 'strongly against',
+};
+const ROUND_NAMES = ['Prior', 'Opening', 'Cross-Exam', 'Rebuttal', 'Closing'];
+const ROUND_CAPTIONS = [
+  'The bench has assembled. Belief priors derive from each member\'s ideology — debate has not yet begun. The chamber\'s entropy is at its widest spread.',
+  'Each member of the bench delivers an opening statement. The chamber begins to organise itself; bounded confidence draws neighbours together.',
+  'Cross-examination. Members probe the strongest opposing arguments. Those of low stubbornness move; those of high stubbornness do not.',
+  'Rebuttal. Members answer the strongest opposing case made against them. The entropy floor of 0.42 nats is the chamber\'s anti-collapse guarantee.',
+  'Closing statements. The members rest on the record they have made. Final orthogonality and diversity are the population-level invariants.'
+];
+
+let lastRun = null;
+let currentRound = 0;
+let personasById = {};
+
+function toast(msg, ms = 2400) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function stanceColorOf(expected) {
+  if (expected > 0.6) return 'var(--st-sfor)';
+  if (expected > 0.15) return 'var(--st-for)';
+  if (expected < -0.6) return 'var(--st-sag)';
+  if (expected < -0.15) return 'var(--st-ag)';
+  return 'var(--st-neut)';
+}
+
+async function loadHealth() {
+  try {
+    const r = await fetch('/api/health'); const j = await r.json();
+    const parts = [];
+    if (j.gemini_key_present) parts.push('GEMINI');
+    if (j.anthropic_key_present) parts.push('CLAUDE');
+    $('#running-provider').textContent = 'PROVIDER : ' + (parts.length ? parts.join(' + ') : 'MOCK');
+    const prov = $('#provider');
+    if (prov && (!prov.value || prov.value === 'mock')) {
+      if (j.gemini_key_present) prov.value = 'gemini';
+      else if (j.anthropic_key_present) prov.value = 'anthropic';
+      else prov.value = 'mock';
+    }
+  } catch { $('#running-provider').textContent = 'PROVIDER : —'; }
+}
+
+async function loadSampleTopics() {
+  const pool = $('#pool').value;
+  const r = await fetch('/api/sample-topics?pool=' + encodeURIComponent(pool));
+  const j = await r.json();
+  const wrap = $('#topic-suggest');
+  wrap.replaceChildren();
+  for (const t of j.topics) {
+    const b = document.createElement('button');
+    b.textContent = t;
+    b.addEventListener('click', () => { $('#topic').value = t; });
+    wrap.appendChild(b);
+  }
+  $('#topic-suggest-label').textContent =
+    pool === 'citizens'   ? 'Sample Questions · Of the Country' :
+    pool === 'investors'  ? 'Sample Questions · Of the Business' :
+    pool === 'evaluators' ? 'Sample Questions · Of the Wedge'   :
+                            'Sample Questions · Of Defense';
+  if (j.topics.length) $('#topic').value = j.topics[0];
+}
+
+/* ────────────────────────────────────────────────
+   THE STANCE CHAMBER — hemicycle bench + opinion floor
+   Top: a smile-shaped arc of 10 seats (the bench)
+   Bottom: opinion floor (x = stance, y = confidence)
+   ──────────────────────────────────────────────── */
+const CHAMBER_W = 1100, CHAMBER_H = 540;
+// Bench arc: a smile-shape near the top of the SVG.
+// Circle center is BELOW the visible region; we render the upper-half of the
+// circle (angles π to 2π, going through 3π/2 — the topmost point).
+const BENCH_CX = 550;
+const BENCH_CY = 360;       // circle center
+const BENCH_R  = 320;       // radius
+// Floor (opinion plane) below the bench
+const FLOOR_X0 = 80,  FLOOR_X1 = 1020;
+const FLOOR_Y0 = 380, FLOOR_Y1 = 510;
+
+function seatXY(i, n) {
+  // Place seat i on the upper half of the bench circle (angles π to 2π).
+  const t = i / Math.max(1, n - 1);
+  const ang = Math.PI + Math.PI * t; // π → 2π
+  return {
+    angle: ang,
+    x: BENCH_CX + BENCH_R * Math.cos(ang),
+    y: BENCH_CY + BENCH_R * Math.sin(ang),
+  };
+}
+
+function setupChamberStatic() {
+  const svg = d3.select('#chamber');
+  svg.selectAll('*').remove();
+
+  // Two parallel arcs forming the bench, drawn as SVG paths.
+  // Outer arc: M (left point) A r,r 0 0,1 (right point)
+  // Use slight inset from circle edges to leave seats sitting on the bench.
+  const benchYLeft  = BENCH_CY + BENCH_R * Math.sin(Math.PI);          // = BENCH_CY
+  const benchXLeft  = BENCH_CX + BENCH_R * Math.cos(Math.PI);          // = BENCH_CX - R
+  const benchYRight = BENCH_CY + BENCH_R * Math.sin(2 * Math.PI);
+  const benchXRight = BENCH_CX + BENCH_R * Math.cos(2 * Math.PI);
+  const innerR = BENCH_R - 22;
+  const benchInnerLeftX = BENCH_CX - innerR;
+  const benchInnerRightX = BENCH_CX + innerR;
+
+  // Filled bench band (between two arcs)
+  const benchPath =
+    `M ${benchXLeft} ${benchYLeft} ` +
+    `A ${BENCH_R} ${BENCH_R} 0 0 1 ${benchXRight} ${benchYRight} ` +
+    `L ${benchInnerRightX} ${benchYRight} ` +
+    `A ${innerR} ${innerR} 0 0 0 ${benchInnerLeftX} ${benchYLeft} Z`;
+  svg.append('path').attr('d', benchPath)
+    .attr('fill', 'var(--paper-deep)')
+    .attr('stroke', 'var(--ink-mute)').attr('stroke-width', 0.7);
+
+  // Hairline guide rule at the inner edge of the bench
+  const guideR = BENCH_R - 28;
+  svg.append('path')
+    .attr('d', `M ${BENCH_CX - guideR} ${BENCH_CY} A ${guideR} ${guideR} 0 0 1 ${BENCH_CX + guideR} ${BENCH_CY}`)
+    .attr('fill', 'none')
+    .attr('stroke', 'var(--rule-faint)').attr('stroke-width', 0.7)
+    .attr('stroke-dasharray', '2 4');
+
+  // Bench label (engraved) — placed in side margin so it doesn't clash with the apex seat.
+  svg.append('text')
+    .attr('x', 60).attr('y', BENCH_CY - BENCH_R + 16)
+    .attr('text-anchor', 'start')
+    .attr('font-family', 'var(--mono)').attr('font-size', 10)
+    .attr('letter-spacing', 4).attr('fill', 'var(--ink-mute)')
+    .text('— THE BENCH —');
+
+  // Floor frame
+  svg.append('rect')
+    .attr('x', FLOOR_X0).attr('y', FLOOR_Y0)
+    .attr('width', FLOOR_X1 - FLOOR_X0).attr('height', FLOOR_Y1 - FLOOR_Y0)
+    .attr('fill', 'var(--paper)').attr('stroke', 'var(--rule)').attr('stroke-width', 0.7);
+
+  // Floor center line + bottom rule
+  svg.append('line')
+    .attr('class', 'floor-axis-faint')
+    .attr('x1', BENCH_CX).attr('x2', BENCH_CX)
+    .attr('y1', FLOOR_Y0).attr('y2', FLOOR_Y1);
+  svg.append('line')
+    .attr('class', 'floor-axis')
+    .attr('x1', FLOOR_X0).attr('x2', FLOOR_X1)
+    .attr('y1', FLOOR_Y1).attr('y2', FLOOR_Y1);
+
+  // Axis labels
+  svg.append('text').attr('class', 'axis-label')
+    .attr('x', FLOOR_X0 + 6).attr('y', FLOOR_Y1 + 18).text('against');
+  svg.append('text').attr('class', 'axis-label')
+    .attr('x', FLOOR_X1 - 6).attr('y', FLOOR_Y1 + 18)
+    .attr('text-anchor', 'end').text('for');
+  svg.append('text').attr('class', 'axis-label')
+    .attr('x', BENCH_CX + 8).attr('y', FLOOR_Y0 + 14).text('confident →');
+  svg.append('text').attr('class', 'axis-label')
+    .attr('x', BENCH_CX + 8).attr('y', FLOOR_Y1 - 8).text('uncertain ↓');
+
+  svg.append('text')
+    .attr('x', BENCH_CX).attr('y', FLOOR_Y0 - 6)
+    .attr('text-anchor', 'middle')
+    .attr('font-family', 'var(--mono)').attr('font-size', 10)
+    .attr('letter-spacing', 4).attr('fill', 'var(--ink-mute)')
+    .text('OPINION FLOOR');
+
+  // Empty-state text
+  svg.append('text').attr('id', 'chamber-empty')
+    .attr('x', BENCH_CX).attr('y', (FLOOR_Y0 + FLOOR_Y1) / 2 + 4)
+    .attr('text-anchor', 'middle')
+    .attr('font-family', 'var(--serif-d)').attr('font-style', 'italic')
+    .attr('font-size', 20).attr('fill', 'var(--ink-mute)')
+    .text('The bench has not yet assembled.');
+
+  // Pre-draw seat ghosts so the chamber looks inhabited even before a debate
+  const ghostG = svg.append('g').attr('class', 'seat-ghost-group');
+  for (let i = 0; i < 10; i++) {
+    const p = seatXY(i, 10);
+    const g = ghostG.append('g').attr('transform', `translate(${p.x},${p.y})`);
+    g.append('circle').attr('r', 7).attr('cy', -4)
+      .attr('fill', 'var(--paper)').attr('stroke', 'var(--ink-mute)').attr('stroke-width', 0.8)
+      .attr('opacity', 0.4);
+    g.append('rect').attr('x', -6).attr('y', 3).attr('width', 12).attr('height', 12)
+      .attr('fill', 'var(--paper)').attr('stroke', 'var(--ink-mute)').attr('stroke-width', 0.8)
+      .attr('opacity', 0.4);
+    g.append('text').attr('y', 28).attr('text-anchor', 'middle')
+      .attr('font-family', 'var(--mono)').attr('font-size', 9)
+      .attr('fill', 'var(--ink-mute)')
+      .attr('opacity', 0.55)
+      .text(romanFor(i + 1));
+  }
+}
+
+function renderChamberSeats() {
+  if (!lastRun) return;
+  const svg = d3.select('#chamber');
+  svg.select('#chamber-empty').remove();
+  svg.selectAll('.seat-ghost-group').remove();
+  svg.selectAll('.seat-group').remove();
+
+  const personas = lastRun.personas;
+  const n = personas.length;
+
+  const seatsG = svg.append('g').attr('class', 'seat-group');
+  personas.forEach((p, i) => {
+    const pos = seatXY(i, n);
+
+    const g = seatsG.append('g').attr('class', 'seat')
+      .attr('transform', `translate(${pos.x},${pos.y})`)
+      .style('cursor', 'pointer')
+      .on('click', () => openDossier(p.persona_id));
+
+    g.append('circle').attr('class', 'body')
+      .attr('r', 7).attr('cy', -5)
+      .attr('fill', 'var(--paper)')
+      .attr('stroke', 'var(--ink)').attr('stroke-width', 1);
+    g.append('rect').attr('class', 'body')
+      .attr('x', -6).attr('y', 2).attr('width', 12).attr('height', 13)
+      .attr('fill', 'var(--paper)')
+      .attr('stroke', 'var(--ink)').attr('stroke-width', 1);
+    g.append('text').attr('class', 'num')
+      .attr('y', 28).attr('text-anchor', 'middle')
+      .text(romanFor(i + 1));
+    const lastWord = (p.synthetic_name.split(' ').slice(-1)[0] || '')
+      .replace(/[\.,()]+$/,'').replace(/^['"]/,'');
+    g.append('text').attr('class', 'name')
+      .attr('y', 42).attr('text-anchor', 'middle')
+      .text(lastWord);
+  });
+
+  renderChamberFrame(currentRound);
+}
+
+const ROMANS = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+function romanFor(i) { return ROMANS[i-1] || String(i); }
+
+function floorXY(d) {
+  // map x ∈ [-1,1] → FLOOR_X0..FLOOR_X1
+  // y is "confidence" = 1 - normalised entropy. In the Friedkin-Johnsen model with
+  // bounded confidence the normalised entropy stays close to 1, so confidence is
+  // typically tiny (~5-15%). A linear map collapses everyone onto the bottom edge.
+  // We apply pow(0.45) to magnify the visible differences.
+  const yNorm = Math.max(0, Math.min(1, d.y));
+  const ySpread = Math.pow(yNorm * 6, 0.45); // amplify low values
+  const yClipped = Math.max(0.05, Math.min(0.95, ySpread));
+  return {
+    x: FLOOR_X0 + ((d.x + 1) / 2) * (FLOOR_X1 - FLOOR_X0),
+    y: FLOOR_Y1 - yClipped * (FLOOR_Y1 - FLOOR_Y0),
+  };
+}
+
+function renderChamberFrame(roundIdx) {
+  if (!lastRun) return;
+  const svg = d3.select('#chamber');
+  svg.selectAll('.belief-layer').remove();
+
+  const layer = svg.append('g').attr('class', 'belief-layer');
+  const frames = lastRun.stance_theatre;
+  const personas = lastRun.personas;
+
+  personas.forEach((p, i) => {
+    const seat = seatXY(i, personas.length);
+
+    // collect trajectory points up to roundIdx
+    const traj = [];
+    for (let r = 0; r <= roundIdx; r++) {
+      const fr = frames[r];
+      if (!fr) continue;
+      const pt = fr.find(f => f.persona_id === p.persona_id);
+      if (pt) {
+        const fxy = floorXY(pt);
+        traj.push({ x: fxy.x, y: fxy.y, expected: pt.expected_stance, confidence: pt.confidence });
+      }
+    }
+    if (!traj.length) return;
+    const cur = traj[traj.length - 1];
+    const colour = stanceColorOf(cur.expected);
+
+    // hairline from seat to current dot
+    layer.append('line').attr('class', 'seat-line')
+      .attr('x1', seat.x).attr('y1', seat.y + 16)
+      .attr('x2', cur.x).attr('y2', cur.y);
+
+    // belief trail (curve through prior rounds)
+    if (traj.length > 1) {
+      const path = d3.line().x(d => d.x).y(d => d.y).curve(d3.curveCatmullRom.alpha(0.5));
+      layer.append('path').attr('class', 'belief-trail')
+        .attr('d', path(traj))
+        .attr('stroke', colour)
+        .attr('opacity', 0.45)
+        .attr('stroke-dasharray', '4 3');
+    }
+
+    // older points (small, fading older→newer)
+    traj.slice(0, -1).forEach((pt, j) => {
+      const a = 0.18 + 0.55 * (j / Math.max(1, traj.length - 1));
+      layer.append('circle')
+        .attr('cx', pt.x).attr('cy', pt.y)
+        .attr('r', 3)
+        .attr('fill', stanceColorOf(pt.expected))
+        .attr('opacity', a);
+    });
+
+    // current point
+    const dot = layer.append('g').attr('class', 'belief-current')
+      .attr('transform', `translate(${cur.x},${cur.y})`);
+    dot.append('circle').attr('class', 'dot')
+      .attr('r', 7.5)
+      .attr('fill', colour)
+      .style('cursor', 'pointer')
+      .on('mouseenter', e => showTT(e, p, cur))
+      .on('mousemove', moveTT)
+      .on('mouseleave', hideTT)
+      .on('click', () => openDossier(p.persona_id));
+    // (no inline numeral on the dot — the seat already labels the persona; this
+    // keeps the opinion floor readable when several agents land near the same
+    // (stance, confidence) coordinates.)
+  });
+
+  $('#round-caption').textContent = `Round ${roundIdx} · ${ROUND_NAMES[roundIdx]} — ${ROUND_CAPTIONS[roundIdx]}`;
+  $('#chamber-meta').textContent = `${lastRun.personas.length} SEATS · ROUND ${roundIdx} · ${ROUND_NAMES[roundIdx].toUpperCase()}`;
+}
+
+function showTT(e, p, pt) {
+  const tt = $('#tt');
+  tt.replaceChildren(
+    el('div', {class: 'nm', text: p.synthetic_name}),
+    el('div', {class: 'meta', text:
+      `EXP STANCE ${pt.expected.toFixed(2)} · CONF ${pt.confidence.toFixed(2)} · ${p.argumentation_style}`}),
+  );
+  tt.classList.add('show');
+  moveTT(e);
+}
+function moveTT(e) {
+  const tt = $('#tt');
+  const rect = $('#chamber').getBoundingClientRect();
+  tt.style.left = (e.clientX - rect.left + 14) + 'px';
+  tt.style.top  = (e.clientY - rect.top - 36) + 'px';
+}
+function hideTT() { $('#tt').classList.remove('show'); }
+
+/* ──────────── Round Medallions ──────────── */
+function setupSeals() {
+  $$('.seal').forEach(s => {
+    s.addEventListener('click', () => {
+      if (s.classList.contains('disabled')) return;
+      const r = parseInt(s.dataset.round, 10);
+      currentRound = r;
+      $$('.seal').forEach(x => x.classList.remove('active'));
+      s.classList.add('active');
+      renderChamberFrame(r);
+    });
+  });
+}
+function setActiveSeal(r) {
+  $$('.seal').forEach(x => x.classList.remove('active'));
+  const s = document.querySelector(`.seal[data-round="${r}"]`);
+  if (s) s.classList.add('active');
+}
+
+/* ──────────── Dissent Broadside ──────────── */
+function renderBroadside(run) {
+  const broad = $('#broadside');
+  if (!run.dissent || !run.dissent.length) {
+    broad.classList.add('empty');
+    setHTML($('#broadside-quote'), 'No dissent has yet been registered against the chamber\'s prevailing view.');
+    setHTML($('#broadside-attrib'), '');
+    $('#steelman-btn').style.display = 'none';
+    return;
+  }
+  const top = run.dissent[0];
+  broad.classList.remove('empty');
+
+  const text = top.text || '';
+  const first = text.charAt(0) || '';
+  const rest = text.slice(1);
+  setHTML($('#broadside-quote'),
+    `<span class="dropcap">${esc(first)}</span>${esc(rest)}`);
+
+  setHTML($('#broadside-attrib'),
+    `— <strong>${esc(top.asserted_by)}</strong>, of the <em>${STANCE_LABEL[top.stance]}</em> opinion · round ${top.round_number} · dissent score <strong>${top.dissent_score.toFixed(3)}</strong>`);
+  $('#steelman-btn').style.display = '';
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ──────────── Article / Executive copy ──────────── */
+function renderProse(targetSel, md, isExec=false) {
+  const target = $(targetSel);
+  target.classList.remove('empty');
+  setHTML(target, mdToHtml(md));
+  if (isExec) target.classList.add('single-col');
+}
+function mdToHtml(md) {
+  if (!md) return '';
+  let t = esc(md);
+  t = t.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+  t = t.replace(/^## (.*)$/gm,  '<h2>$1</h2>');
+  t = t.replace(/^# (.*)$/gm,   '<h1>$1</h1>');
+  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  t = t.replace(/(^|\n)(- .+(?:\n- .+)*)/g, (m, lead, group) => {
+    const items = group.split(/\n/).map(s => s.replace(/^- /, '')).map(s => '<li>' + s + '</li>').join('');
+    return lead + '<ul>' + items + '</ul>';
+  });
+  t = t.replace(/^> (.*)$/gm, '<blockquote>$1</blockquote>');
+  t = t.replace(/\n\n/g, '<br/><br/>');
+  return t;
+}
+
+/* ──────────── Dissent register ──────────── */
+function renderDissent(run) {
+  const wrap = $('#dissent');
+  wrap.replaceChildren();
+  if (!run.dissent || !run.dissent.length) {
+    wrap.appendChild(el('p', {
+      style: {color: 'var(--ink-mute)', fontStyle: 'italic'},
+      text: 'No dissent registered.'
+    }));
+    return;
+  }
+  for (const r of run.dissent.slice(0, 12)) {
+    const row = el('div', {class: 'dissent-row'});
+    const top = el('div', {class: 'top'});
+    top.appendChild(el('div', {class: 'who', text: r.asserted_by}));
+    const meta = el('div', {class: 'meta'});
+    meta.appendChild(el('span', {text: `ROUND ${r.round_number} · ${STANCE_LABEL[r.stance].toUpperCase()}`}));
+    meta.appendChild(el('span', {class: 'score', text: `DISSENT ${r.dissent_score.toFixed(3)}`}));
+    top.appendChild(meta);
+    row.appendChild(top);
+    row.appendChild(el('div', {class: 'quote', text: r.text}));
+    wrap.appendChild(row);
+  }
+}
+
+/* ──────────── Transcript ──────────── */
+function renderTranscript(run) {
+  const wrap = $('#transcript');
+  wrap.replaceChildren();
+  for (const t of run.transcript) {
+    let stance = 'neutral';
+    for (const c of run.argument_graph.nodes) {
+      if (t.claim_ids.includes(c.id)) { stance = c.stance; break; }
+    }
+    const turn = el('div', {class: 'turn'});
+    const sp = el('div', {class: 'speaker'});
+    const left = el('div');
+    const pill = el('span', {
+      class: 'stance-pill',
+      text: STANCE_LABEL[stance],
+      style: {color: STANCE_COLOR[stance]}
+    });
+    left.appendChild(pill);
+    left.appendChild(document.createTextNode(t.persona_label));
+    sp.appendChild(left);
+    sp.appendChild(el('span', {class: 'ord', text: `ROUND ${t.round_number} · ${(t.round||'').replace('_',' ').toUpperCase()}`}));
+    turn.appendChild(sp);
+    turn.appendChild(el('div', {class: 'text', text: t.text}));
+    wrap.appendChild(turn);
+  }
+}
+
+/* ──────────── Personae cards ──────────── */
+function renderPersonas(run) {
+  const wrap = $('#personas');
+  wrap.replaceChildren();
+  personasById = {};
+  run.personas.forEach((p, i) => {
+    personasById[p.persona_id] = p;
+    const card = el('div', {class: 'persona-card'});
+    card.appendChild(el('h3', {text: p.synthetic_name}));
+    const role = el('div', {class: 'role'});
+    role.appendChild(el('span', {class: 'b', text: 'SEAT ' + romanFor(i + 1) + ' · '}));
+    role.appendChild(document.createTextNode(p.professional_identity));
+    card.appendChild(role);
+    card.appendChild(el('div', {style: {fontSize: '13px', fontStyle: 'italic', color: 'var(--ink-soft)', marginBottom: '12px'}, text:
+      `b. ${p.birth_year} ${p.birth_place} · ${p.argumentation_style} / ${p.epistemic_style}` }));
+    const books = el('div', {class: 'books'});
+    books.appendChild(el('h4', {text: 'Five Formative Volumes'}));
+    for (const b of p.formative_books) {
+      const bk = el('div', {class: 'book'});
+      bk.appendChild(el('div', {}, ));
+      const ti = el('div');
+      ti.appendChild(el('span', {class: 'title', text: b.title + ' '}));
+      ti.appendChild(el('span', {class: 'auth', text: '— ' + b.author}));
+      bk.appendChild(ti);
+      bk.appendChild(el('div', {class: 'why',
+        text: `read at ${b.age_when_read} (${b.year_first_read}). ${(b.why_it_mattered||'').slice(0, 130)}…`
+      }));
+      books.appendChild(bk);
+    }
+    card.appendChild(books);
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => openDossier(p.persona_id));
+    wrap.appendChild(card);
+  });
+}
+
+/* ──────────── Argument graph ──────────── */
+function renderGraph(run) {
+  const container = $('#graph');
+  container.replaceChildren();
+  const w = container.clientWidth || 800, h = 540;
+  const svg = d3.select(container).append('svg').attr('width', w).attr('height', h);
+  const g = svg.append('g');
+
+  const nodes = run.argument_graph.nodes.map(n => Object.assign({}, n));
+  const links = run.argument_graph.edges.map(e => ({source: e.source, target: e.target, type: e.type, weight: e.weight}));
+
+  if (!nodes.length) {
+    svg.append('text').attr('x', w/2).attr('y', h/2).attr('fill', 'var(--ink-mute)')
+      .attr('text-anchor', 'middle')
+      .attr('font-family', 'var(--serif-d)').attr('font-style', 'italic').attr('font-size', 18)
+      .text('No claims to graph');
+    return;
+  }
+  const sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(72).strength(0.4))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(w/2, h/2))
+    .force('collide', d3.forceCollide().radius(d => 6 + 32*d.pagerank));
+  const link = g.selectAll('line').data(links).enter().append('line')
+    .attr('class', d => 'graph-edge ' + d.type)
+    .attr('stroke-width', d => 1 + 2*d.weight);
+  const node = g.selectAll('g.graph-node').data(nodes).enter().append('g').attr('class', 'graph-node');
+  node.append('circle')
+    .attr('r', d => 4 + 30*d.pagerank)
+    .attr('fill', d => `var(--st-${d.stance})`);
+  node.append('title').text(d => `${d.asserted_by} · round ${d.round_number} · ${STANCE_LABEL[d.stance]}\n${d.text}`);
+  node.append('text').attr('dx', 9).attr('dy', 4).text(d => (d.asserted_by.match(/\((.*?)\)/)?.[1] || d.asserted_by).split(/\s/).slice(0, 2).join(' '));
+  sim.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+  node.call(d3.drag()
+    .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+    .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+    .on('end', (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+}
+
+/* ──────────── Dossier slide-in ──────────── */
+function openDossier(personaId) {
+  const p = personasById[personaId];
+  if (!p) return;
+  const seatNum = lastRun.personas.findIndex(x => x.persona_id === personaId) + 1;
+  $('#d-seat-num').textContent = seatNum > 0 ? romanFor(seatNum) : '—';
+  $('#d-name').textContent = p.synthetic_name;
+  $('#d-role').textContent = p.professional_identity;
+
+  const body = $('#dossier-body');
+  body.replaceChildren();
+
+  const bio = el('div', {class: 'dossier-section'});
+  bio.appendChild(el('div', {class: 'h', text: 'On the Record'}));
+  const tongue = p.mother_tongue || 'unspecified';
+  const klass = p.socioeconomic_class_at_birth || 'unspecified';
+  bio.appendChild(el('p', {text: `Born ${p.birth_year}, ${p.birth_place}. Mother tongue: ${tongue}. Class at birth: ${klass}.`}));
+  if (p.education_summary) bio.appendChild(el('p', {text: `Education — ${p.education_summary}`}));
+  if (p.career_summary) bio.appendChild(el('p', {text: `Career — ${p.career_summary}`}));
+  bio.appendChild(el('p', {text: `Argues in the ${p.argumentation_style} register, under a ${p.epistemic_style} epistemic style. Stubbornness λ ≈ ${(p.stubbornness ?? 0.5).toFixed(2)}.`}));
+  body.appendChild(bio);
+
+  // ideology bars — convention: positive value = first label, negative = second.
+  // (Schema field `hawkish_dovish` = +1 means hawkish; the persona seed uses this
+  // direction. Marker positions LEFT for positive, so the first label-word in
+  // each pair sits to the LEFT of the bar centre.)
+  if (p.ideology) {
+    const ide = el('div', {class: 'dossier-section'});
+    ide.appendChild(el('div', {class: 'h', text: 'Ideological Coordinates'}));
+    const labels = [
+      ['hawkish_dovish', 'hawkish ↔ dovish'],
+      ['statist_libertarian', 'statist ↔ libertarian'],
+      ['nationalist_globalist', 'nationalist ↔ globalist'],
+      ['market_planner', 'market ↔ planner'],
+      ['realist_idealist', 'realist ↔ idealist'],
+    ];
+    for (const [k, lab] of labels) {
+      const row = el('div', {class: 'ideology-bar'});
+      row.appendChild(el('span', {class: 'lab', text: lab}));
+      const track = el('div', {class: 'track'});
+      const v = Math.max(-1, Math.min(1, p.ideology[k] ?? 0));
+      const m = el('div', {class: 'marker'});
+      // Positive value (first label) → marker on the LEFT side of the track.
+      m.style.left = `${50 - v * 50}%`;
+      track.appendChild(m);
+      row.appendChild(track);
+      ide.appendChild(row);
+    }
+    body.appendChild(ide);
+  }
+
+  // formative books
+  const books = el('div', {class: 'dossier-section'});
+  books.appendChild(el('div', {class: 'h', text: 'Five Formative Volumes'}));
+  for (const b of p.formative_books) {
+    const bk = el('div', {class: 'dossier-book'});
+    bk.appendChild(el('div', {class: 't', text: b.title}));
+    bk.appendChild(el('div', {class: 'a', text: b.author}));
+    bk.appendChild(el('div', {class: 'age', text: `READ AT ${b.age_when_read} · ${b.year_first_read}` + (b.re_read_count > 1 ? ` · RE-READ ${b.re_read_count}×` : '')}));
+    bk.appendChild(el('div', {class: 'why', text: '"' + (b.why_it_mattered || '') + '"'}));
+    books.appendChild(bk);
+  }
+  body.appendChild(books);
+
+  $('#dossier').classList.add('show');
+  $('#dossier').setAttribute('aria-hidden', 'false');
+  $('#dossier-overlay').classList.add('show');
+}
+function closeDossier() {
+  $('#dossier').classList.remove('show');
+  $('#dossier').setAttribute('aria-hidden', 'true');
+  $('#dossier-overlay').classList.remove('show');
+}
+
+/* ──────────── Steelman the minority ──────────── */
+function steelmanMinority() {
+  if (!lastRun || !lastRun.dissent || !lastRun.dissent.length) return;
+  const top = lastRun.dissent[0];
+  const minorityClaims = lastRun.dissent.filter(d => d.stance === top.stance).slice(0, 4);
+  const lines = [
+    `# Steelman of the ${STANCE_LABEL[top.stance]} dissent`,
+    '',
+    `If you discount the chamber's majority and grant the strongest version of the dissenting case, the load-bearing arguments are these:`,
+    ''
+  ];
+  for (const c of minorityClaims) {
+    lines.push(`- **${c.asserted_by}** (round ${c.round_number}): ${c.text}`);
+  }
+  lines.push('');
+  lines.push(`> The point of a steelman is not to agree with the minority — it is to identify what would have to be true for the minority to be right. If you cannot answer the questions raised by the four arguments above, the chamber's apparent consensus is not yet earned.`);
+  // switch to the dissent tab and prepend the steelman
+  setActiveTab('dissent');
+  const dissentTab = $('#dissent');
+  const block = el('div', {style: {marginBottom: '24px', padding: '14px 18px', background: 'var(--paper-deep)', borderLeft: '4px solid var(--vermilion)'}});
+  setHTML(block, mdToHtml(lines.join('\n')));
+  dissentTab.prepend(block);
+  toast('Steelman drafted · pinned to the Register of Dissent.');
+}
+
+function setActiveTab(name) {
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  $$('.tab-body').forEach(x => x.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${name}"]`).classList.add('active');
+  $(`#tab-${name}`).classList.add('active');
+}
+
+/* ──────────── Run a debate ──────────── */
+async function runDebate() {
+  const topic = $('#topic').value.trim();
+  if (!topic) { toast('A question must first be put to the chamber.'); return; }
+  const cluster_size = parseInt($('#cluster-size').value || '10', 10);
+  const seed = parseInt($('#seed').value || '42', 10);
+  const provider_choice = $('#provider').value;
+  const force_mock = provider_choice === 'mock';
+  const pool = $('#pool').value;
+
+  const btn = $('#run-btn');
+  btn.disabled = true;
+  btn.replaceChildren(
+    Object.assign(document.createElement('span'), {className: 'spinner'}),
+    document.createTextNode('The chamber is in session…')
+  );
+
+  try {
+    const r = await fetch('/api/debate', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({ topic, cluster_size, seed, force_mock, pool, provider: provider_choice }),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({detail: 'request failed'}));
+      throw new Error(err.detail || ('HTTP ' + r.status));
+    }
+    const run = await r.json();
+    lastRun = run;
+
+    // metrics
+    const m = run.metrics;
+    $('#m-turns').textContent = m.n_turns;
+    $('#m-claims').textContent = m.n_claims;
+    $('#m-words').textContent = m.article_word_count;
+    $('#m-band').textContent = (m.quality_band || '—').toUpperCase();
+    $('#m-cost').textContent = '₹' + (m.estimated_cost_inr ?? 0).toFixed(2);
+    $('#m-ortho').textContent = (m.final_orthogonality ?? 0).toFixed(3);
+    $('#m-entropy').textContent = (m.final_cluster_entropy ?? 0).toFixed(3);
+
+    $('#d-debate').textContent = '“' + (run.config.topic.length > 86 ? run.config.topic.slice(0,84) + '…' : run.config.topic) + '”';
+    $('#d-chamber').textContent = (run.pool || pool).toUpperCase() + ' · ' + (run.provider || 'gemini').toUpperCase();
+    $('#d-disp').textContent = `${m.n_claims} claims of record · seed ${run.config.seed}`;
+
+    renderBroadside(run);
+    renderProse('#article', run.article);
+    renderProse('#exec', run.executive_remark, true);
+    renderDissent(run);
+    renderTranscript(run);
+    renderPersonas(run);
+    renderGraph(run);
+
+    setupChamberStatic();
+    renderChamberSeats();
+    currentRound = 0;
+    setActiveSeal(0);
+
+    // play forward to round 4 with a short delay
+    setTimeout(() => {
+      let i = 1;
+      const tick = () => {
+        if (i > 4) return;
+        currentRound = i;
+        setActiveSeal(i);
+        renderChamberFrame(i);
+        i++;
+        setTimeout(tick, 700);
+      };
+      tick();
+    }, 600);
+
+    toast(`Chamber dispatched · ${m.n_turns} turns · ${m.n_claims} claims · ₹${(m.estimated_cost_inr ?? 0).toFixed(2)}`);
+  } catch (e) {
+    console.error(e);
+    toast('The chamber failed to convene · ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.replaceChildren();
+    btn.appendChild(el('span', {class: 'ornament', text: '❦'}));
+    btn.appendChild(document.createTextNode('Convene the Chamber'));
+  }
+}
+
+/* ──────────── Tabs ──────────── */
+function setupTabs() {
+  $$('.tab').forEach(t => t.addEventListener('click', () => setActiveTab(t.dataset.tab)));
+}
+
+/* ──────────── Boot ──────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  loadHealth();
+  loadSampleTopics();
+  setupTabs();
+  setupSeals();
+  setupChamberStatic();
+  $('#run-btn').addEventListener('click', runDebate);
+  $('#pool').addEventListener('change', loadSampleTopics);
+  $('#dossier-close').addEventListener('click', closeDossier);
+  $('#dossier-overlay').addEventListener('click', closeDossier);
+  $('#steelman-btn').addEventListener('click', steelmanMinority);
+  $('#bc-link').addEventListener('click', e => {
+    e.preventDefault();
+    toast('See /Users/sargupta/ai-debate-policy/BUSINESS_CASE.md for the brutal commercial scoping.');
+  });
+});
+</script>
+</body>
+</html>
